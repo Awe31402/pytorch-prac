@@ -84,8 +84,8 @@ print(len(mnist_train), len(mnist_test))
 X, y = next(iter(data.DataLoader(mnist_train, batch_size=18)))
 # show_images(X.reshape(18, 1, 28, 28), 2, 9, get_fashion_mnist_labels(y))
 
-EPOCH = 20
-batch_size = 2048
+EPOCH = 50
+batch_size = 256
 lr = 0.1
 
 # Use PyTorch DataLoader for efficient batching
