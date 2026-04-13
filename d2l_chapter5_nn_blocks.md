@@ -100,3 +100,25 @@ MySequential(
 )
 ```
 這也是 `self._modules` 自動整理好的結果：前者把層對應在命名好的物件變數 (`hidden`, `out`) 上，而後者則是依照串聯順序 (`0`, `1`, `2`) 作為變數名稱註冊。
+
+### FAQ: 為什麼列印 MLP 時沒有顯示 ReLU 層？
+
+您可能會注意到，在列印 `MLP` 時，結構中並沒有像 `MySequential` 那樣顯示出 `ReLU()` 層。
+
+這是因為 `print(模型)`（也就是呼叫模型的 `__repr__` 方法）**只會去讀取我們在 `__init__` 中設定好且繼承自 `nn.Module` 的模組實例**（即被放入 `_modules` 中的變數）。
+
+在 `MLP` 中：
+```python
+return self.out(F.relu(self.hidden(X)))
+```
+我們直接在 `forward` 中使用了來自 `torch.nn.functional` 的 `F.relu`，這只是一個 **單純的 Python 函式**，並沒有經過 `__init__` 的註冊動作，因此 PyTorch 不知道有這麼一個層。
+
+在 `MySequential` 中：
+```python
+net_seq = MySequential(nn.Linear(20, 256), nn.ReLU(), nn.Linear(256, 10))
+```
+我們傳入的是 `nn.ReLU()`，這是一個 **繼承自 `nn.Module` 的正式類別實例**。它在初始化時被註冊進了 `_modules` 字典，因此列印結構時便會顯示出來。
+
+一般而言：
+- **含有可更新參數的層**（如 `nn.Linear`、`nn.Conv2d`）必須放在 `__init__` 宣告。
+- **無參數僅作運算處理的函數**（如 ReLU 激活、池化操作），為求程式碼簡潔，開發者常習慣直接在 `forward` 中以 `functional` 的形式呼叫。
